@@ -1,4 +1,4 @@
-(load "./commands.arc")
+(require "./commands.arc")
 
 (assign usage "Usage: \nquarry info [stone]: get info about a stone or about the current project
 quarry lay <stone>: download and install an arc package
@@ -10,7 +10,7 @@ quarry help: Print quarry usage/help page
 quarry rm <stone>: remove a quarry package")
 
 (case (argv 1) 
-    "mason" (do (prn "username: ") (= username (readline) ) (pr "password: ") (= password (readline)))
+    "mason" (do (prn "username: ") (= username (readline) ) (pr "password: ") (= password (readline)) (pr "email: ") (= email (readline)) (create-mason username password email))
     "cut" (prn "someone is creating a stone(quarry packages are called stones)") 
     "info" (prn "someone is getting info")
     "lay" (prn "someone is installing a package")
