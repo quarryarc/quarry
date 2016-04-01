@@ -8,17 +8,35 @@ quarry cut <stone>: publish a new quarry package
 quarry get <stone>: download but don’t install a quarry package
 quarry help: Print quarry usage/help page
 quarry rm <stone>: remove a quarry package")
-
-(case (argv 1) 
-    "mason" (do (prn "username: ") (= username (readline) ) (pr "password: ") (= password (readline)) (pr "email: ") (= email (readline)) (create-mason username password email))
-    "cut" (prn "someone is creating a stone(quarry packages are called stones)") 
-    "info" (prn "someone is getting info")
-    "lay" (prn "someone is installing a package")
-    "build" (prn "someone is building this project")
-    "cut" (prn "Someone is publishing a stone")
-    "get" (prn "someone is getting" + stone)
-    "rm" (prn "someone is removing a stone")
-    "help" (prn usage)
+;;Will rewrite if graceful list lookup is implemented: https://github.com/arclanguage/anarki/issues/48
+(if (< (len argv) 2)
     (prn usage)
+    (case (argv 1) 
+        "mason" (do 
+            (prn "username: ") (= username (readline) )
+            (pr "password: ") (= password (readline)) 
+            (pr "email: ") (= email (readline))
+            (create-mason username password email))
+        "cut" (do
+                (if (< (len argv) 3)
+                    (do (prn "pick a name for your new stone: ")
+                     (= stonename (readline)))
+                    (= stonename (argv 2))
+                )
+                (= files (table))
+                (each f (dir ($ (path->string (current-directory))))(unless (dir-exists f) (= (files f) (infile f))))
+                (pr files)
+                (upload-stone stonename files)
+              )
+               
+        "info" (prn "someone is getting info")
+        "lay" (prn "someone is installing a package")
+        "build" (prn "someone is building this project")
+        "cut" (prn "Someone is publishing a stone")
+        "get" (prn "someone is getting" + stone)
+        "rm" (prn "someone is removing a stone")
+        "help" (prn usage)
+        (prn usage)
+    )
 )
 
