@@ -11,7 +11,7 @@
 ;             - Only compatible with GET requests.
 
 (= protocol* "HTTP/1.0"
-   useragent* "Web.arc/1.0"
+   useragent* "journeyman.arc/0.0.1"
    content-type* "Content-Type: application/x-www-form-urlencoded")
 
 (mac w/io (io request func)
@@ -22,7 +22,7 @@
         (close ,i ,o)
         ,response))))
 
-(def mkreq (url (o querylist) (o method "GET") (o cookies) (o headers))
+(def mkreq (url (o querylist) (o method "GET") (o cookies) (o headers) (o files))
   (let url (parse-url url)
     (w/io (get-io   url!resource url!host url!port)
           (buildreq url!host
@@ -123,10 +123,18 @@
     (+ query (str-rn))
     nil))
 
-(def buildreq (host path query method cookies headers)
-  (+ (build-header host path query method cookies headers)
+;;File Upload
+(def build-multipart-body (parts)
+  (mapappend (string "----partboundary----\nContent-Disposition: @_!filename\nContent-Type: text/plain\n" _) parts)
+
+)
+
+(def buildreq (host path query method cookies headers files)
+  (+ (build-header host path query method cookies headers files)
      (str-rn 2)
-     (build-body query method)))
+     (if (is content-type* "Content-Type: multipart/form-data; boundary= ----partboundary----")
+       (build-multipart-body files)
+       (build-body query method)))
 
 (def str-rn ((o n 1))
   (if (<= n 1)
@@ -153,11 +161,21 @@
     (whilet line (readline s)
       (pr line))))
 
+;;File Upload
+
+
+
+
 ; Convenience functions.
+(def upload-file (url (o args) files)
+  (= content-type* "Content-Type: multipart/form-data; boundary= ----partboundary----")
+ (cdr (mkreq url args "POST" nil nil files)) 
+)
 ; Note: these ignore the response header: (car (mkreq url))
 (def get-url (url)
   (cdr (mkreq url)))
 
+; (post-url "url" (list 'arg1 arg1 'arg2 arg2 'arg3 arg3))
 (def post-url (url args)
   (cdr (mkreq url args "POST")))
 
