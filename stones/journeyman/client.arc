@@ -25,12 +25,13 @@
 (def mkreq (url (o querylist) (o method "GET") (o cookies) (o headers) (o files))
   (let url (parse-url url)
     (w/io (get-io   url!resource url!host url!port)
-          (buildreq url!host
+          (pr (buildreq url!host
                     url!path
                     (build-query url!query querylist)
                     (upcase method)
                     cookies
-                    headers)
+                    headers
+                    files))
           receive-response)))
 
 (mac defreq (name url (o querylist) (o method "GET") (o cookies))
@@ -81,7 +82,7 @@
                        (pair:map [coerce _ 'string] querylist)))
              "&")))
 
-(def build-header (host path query method cookies headers)
+(def build-header (host path query method cookies headers (o files))
   (reduce +
     (intersperse (str-rn)
                  (flat:list
@@ -125,16 +126,15 @@
 
 ;;File Upload
 (def build-multipart-body (parts)
-  (mapappend (string "----partboundary----\nContent-Disposition: @_!filename\nContent-Type: text/plain\n" _) parts)
-
+  (map [string "----partboundary----\nContent-Disposition: @_!filename\nContent-Type: text/plain\n" _!filebody] parts)
 )
 
-(def buildreq (host path query method cookies headers files)
+(def buildreq (host path query method cookies headers (o files))
   (+ (build-header host path query method cookies headers files)
      (str-rn 2)
      (if (is content-type* "Content-Type: multipart/form-data; boundary= ----partboundary----")
        (build-multipart-body files)
-       (build-body query method)))
+       (build-body query method))))
 
 (def str-rn ((o n 1))
   (if (<= n 1)
@@ -169,8 +169,7 @@
 ; Convenience functions.
 (def upload-file (url (o args) files)
   (= content-type* "Content-Type: multipart/form-data; boundary= ----partboundary----")
- (cdr (mkreq url args "POST" nil nil files)) 
-)
+  (cdr (mkreq url args "POST" nil nil files)))
 ; Note: these ignore the response header: (car (mkreq url))
 (def get-url (url)
   (cdr (mkreq url)))

@@ -23,10 +23,18 @@ quarry rm <stone>: remove a quarry package")
                      (= stonename (readline)))
                     (= stonename (argv 2))
                 )
-                (= files (table))
-                (each filename (dir ($ (path->string (current-directory))))(unless (dir-exists filename) (= (files filename) (fromfile filename (as string (drain:readc))))))
-                ;(pr files)
-                (upload-stone stonename files)
+                (= filelist (list))
+                (each 
+                    filename 
+                    (dir ($ (path->string (current-directory))))
+                    (unless (dir-exists filename) 
+                        (push 
+                            (obj filename filename filebody (fromfile filename (as string (drain:readc)))) 
+                            filelist)
+                        (prn "@filename has been chiseled"))
+                )
+                (prn "Name of Stone " stonename)
+                (upload-stone stonename filelist)
               )
                
         "info" (prn "someone is getting info")
